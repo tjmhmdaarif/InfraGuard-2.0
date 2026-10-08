@@ -2,7 +2,7 @@
 
 **An interactive bridge digital-twin demo for exploring synthetic sensor telemetry, traffic scenarios, alerts, and imported bridge geometry.**
 
-[![Open live demo](https://img.shields.io/badge/demo-live-00b7cf?style=for-the-badge)](https://infraguard-twin.vercel.app)
+[![Open live demo](https://img.shields.io/badge/demo-live-00b7cf?style=for-the-badge)](https://infraguard-twin-github.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-64748b?style=for-the-badge)](./LICENSE)
 
 **Source repository:** [tjmhmdaarif/Infraguard---Bridge-Health-Monitoring-Syste-](https://github.com/tjmhmdaarif/Infraguard---Bridge-Health-Monitoring-Syste-)
@@ -11,10 +11,10 @@
 
 ## Live demo
 
-- **Application:** [infraguard-twin.vercel.app](https://infraguard-twin.vercel.app)
-- **Digital twin:** [Open the 3D bridge](https://infraguard-twin.vercel.app/digital-twin)
-- **Live monitoring:** [View telemetry and charts](https://infraguard-twin.vercel.app/live-monitoring)
-- **Bridge models:** [View model import and comparison](https://infraguard-twin.vercel.app/bridge-models)
+- **Application:** [infraguard-twin-github.vercel.app](https://infraguard-twin-github.vercel.app)
+- **Digital twin:** [Open the 3D bridge](https://infraguard-twin-github.vercel.app/digital-twin)
+- **Live monitoring:** [View telemetry and charts](https://infraguard-twin-github.vercel.app/live-monitoring)
+- **Bridge models:** [View model import and comparison](https://infraguard-twin-github.vercel.app/bridge-models)
 
 ## Screenshots
 
