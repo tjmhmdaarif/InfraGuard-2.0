@@ -59,7 +59,6 @@ export function CorrelationChart({ title, subtitle, xLabel, yLabel, color, data 
               tick={{ fill: 'var(--fg-muted)', fontSize: 11 }}
               axisLine={{ stroke: 'var(--border-primary)' }}
               tickLine={{ stroke: 'var(--border-primary)' }}
-              nameStyle={{ fill: 'var(--fg-secondary)', fontSize: 11 }}
             />
             <YAxis
               type="number"
@@ -69,7 +68,6 @@ export function CorrelationChart({ title, subtitle, xLabel, yLabel, color, data 
               tick={{ fill: 'var(--fg-muted)', fontSize: 11 }}
               axisLine={{ stroke: 'var(--border-primary)' }}
               tickLine={{ stroke: 'var(--border-primary)' }}
-              nameStyle={{ fill: 'var(--fg-secondary)', fontSize: 11 }}
             />
             <Tooltip
               contentStyle={{
@@ -87,7 +85,6 @@ export function CorrelationChart({ title, subtitle, xLabel, yLabel, color, data 
               fill={color}
               stroke={color}
               shape="circle"
-              size={6}
               opacity={0.6}
             />
             {trendLine.length === 2 && (
@@ -95,12 +92,8 @@ export function CorrelationChart({ title, subtitle, xLabel, yLabel, color, data 
                 name="Trend"
                 data={trendLine}
                 fill="transparent"
-                stroke={color}
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                shape="circle"
-                size={0}
-                customLine={({ points }: any) => points && <path d={`M${points[0].x},${points[0].y} L${points[1].x},${points[1].y}`} stroke={color} strokeWidth={2} strokeDasharray="5 5" />}
+                shape={() => <g />}
+                line={{ stroke: color, strokeWidth: 2, strokeDasharray: '5 5' }}
               />
             )}
           </ScatterChart>

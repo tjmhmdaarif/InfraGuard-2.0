@@ -222,7 +222,7 @@ export class AnomalyEngine {
       affectedSensors: [sensor.sensorId],
       affectedZones: [sensor.zoneId],
       description,
-      timestamp: now,
+      timestamp: new Date().toISOString(),
       simulationTime,
       acknowledged: false,
     };

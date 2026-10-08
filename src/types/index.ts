@@ -7,3 +7,5 @@ export * from './health';
 export * from './anomaly';
 export * from './alert';
 export * from './scenario';
+export type { Scenario as ScenarioConfig } from './scenario';
+export type { SimulationClock, SimulationSpeed } from '../simulation/SimulationClock';

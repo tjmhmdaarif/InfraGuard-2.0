@@ -77,8 +77,11 @@ export const useTelemetryStore = create<TelemetryState>()(
     startRecording: () =>
       set({ recording: true, recordedSession: [] }),
 
-    stopRecording: () =>
-      set((state) => ({ recording: false, recordedSession: state.recordedSession })),
+    stopRecording: () => {
+      const recordedSession = get().recordedSession;
+      set({ recording: false });
+      return recordedSession;
+    },
 
     getSensorHistory: (sensorId: string, timeRange?: TelemetryTimeRange) => {
       const { history } = get();

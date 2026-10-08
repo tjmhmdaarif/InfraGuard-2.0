@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Thermometer, Zap, Target, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { MapPin, Thermometer, Zap, Target, CheckCircle, AlertTriangle, XCircle, Radio } from 'lucide-react';
 import { ZoneHealth } from '../../types/health';
 
 const ZONE_COLORS: Record<string, string> = {

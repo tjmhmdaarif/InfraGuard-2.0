@@ -1,3 +1,5 @@
+import type { FilterConfiguration, TelemetryQuality } from '../telemetry';
+
 export type SensorType =
   | 'MPU6050'
   | 'STRAIN'
@@ -34,13 +36,6 @@ export interface CalibrationProfile {
   unit: string;
 }
 
-export interface FilterConfiguration {
-  type: 'MOVING_AVERAGE' | 'LOW_PASS' | 'MEDIAN' | 'EMA' | 'NONE';
-  windowSize?: number;
-  alpha?: number;
-  cutoffFrequency?: number;
-}
-
 export interface SensorConfiguration {
   sensorId: string;
   sensorType: SensorType;
@@ -49,6 +44,7 @@ export interface SensorConfiguration {
   position: SensorPosition;
   rotation: SensorRotation;
   calibrationProfileId: string;
+  componentId?: string;
   status: SensorStatus;
   healthScore: number;
   batteryLevel: number;
@@ -101,15 +97,6 @@ export interface StrainData {
 export interface LoadData {
   load: number;
   unit: 'kN' | 'kg';
-}
-
-export interface TelemetryQuality {
-  noise: number;
-  drift: number;
-  packetLoss: number;
-  timestampJitter: number;
-  stale: boolean;
-  communicationDelay: number;
 }
 
 export interface SensorMarkerState {

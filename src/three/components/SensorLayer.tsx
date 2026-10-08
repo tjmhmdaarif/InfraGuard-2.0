@@ -14,9 +14,9 @@ export const SensorLayer = memo(function SensorLayer({ sensors, sensorConfigs, h
   const { selectedSensorId, hoveredSensorId, selectSensor, hoverSensor } = useSensorStore();
   const { showSensorMarkers } = useUIStore();
 
-  if (!showSensorMarkers) return null;
-
   const markers = useMemo(() => {
+    if (!showSensorMarkers) return [];
+
     return sensors.map((anchor) => {
       const config = sensorConfigs.find((c) => c.sensorId === anchor.sensorId);
       const status = config?.status || 'NORMAL';
@@ -43,8 +43,9 @@ export const SensorLayer = memo(function SensorLayer({ sensors, sensorConfigs, h
         />
       );
     });
-  }, [sensors, sensorConfigs, selectedSensorId, hoveredSensorId, heatmapMode, selectSensor, hoverSensor]);
+  }, [sensors, sensorConfigs, selectedSensorId, hoveredSensorId, heatmapMode, showSensorMarkers, selectSensor, hoverSensor]);
 
+  if (!showSensorMarkers) return null;
   return <group>{markers}</group>;
 });
 

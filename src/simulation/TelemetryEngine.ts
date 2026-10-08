@@ -244,10 +244,6 @@ export class TelemetryEngine {
       }
     }
 
-    if (failure) {
-      return this.applyFailure(packet, sensor, failure, simulationTime);
-    }
-
     const anomalyScore = this.calculateAnomalyScore(sensor, vibration, strain, displacement);
     const healthScore = this.calculateHealthScore(sensor, anomalyScore);
     const status = this.determineStatus(healthScore, anomalyScore);
@@ -279,7 +275,7 @@ export class TelemetryEngine {
       quality: this.generateQuality(noise),
     };
 
-    return packet;
+    return failure ? this.applyFailure(packet, sensor, failure, simulationTime) : packet;
   }
 
   private applyFailure(

@@ -77,7 +77,6 @@ export function EmergencyBanner() {
 // Floating emergency indicator for 3D scene
 export function BridgeEmergencyIndicator() {
   const { bridgeIntegrity, emergencyStatus } = useEnvironmentStore();
-  const meshRef = useRef<THREE.Mesh>(null);
 
   if (emergencyStatus === 'NORMAL') return null;
 
@@ -85,7 +84,7 @@ export function BridgeEmergencyIndicator() {
   const color = isCritical ? '#ef4444' : '#f59e0b';
 
   return (
-    <mesh ref={meshRef} position={[0, 12, 0]}>
+    <mesh position={[0, 12, 0]}>
       <sphereGeometry args={[0.8, 16, 16]} />
       <meshBasicMaterial color={color} transparent opacity={0.8} />
       {/* Pulsing animation would go here via useFrame */}

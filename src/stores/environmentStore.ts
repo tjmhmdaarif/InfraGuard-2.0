@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type DemoWeatherMode = 'CLEAR' | 'RAIN' | 'HEAVY_RAIN' | 'CYCLONE';
+export type DemoWeatherMode = 'CLEAR' | 'RAIN' | 'HEAVY_RAIN' | 'FOG' | 'CYCLONE';
 export type SceneFinishMode = 'PBR' | 'WIREFRAME' | 'STRESS';
 export type EmergencyStatus = 'NORMAL' | 'ATTENTION' | 'SAFETY_RESTRICTION' | 'CLOSED';
 
@@ -208,24 +208,26 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
 }));
 
 // Sync computed emergency status when bridge integrity changes
-useEnvironmentStore.subscribe(
-  (state) => state.bridgeIntegrity,
-  (integrity) => {
-    if (get().emergencyStatus === 'NORMAL' && integrity < 90) {
-      get().setEmergencyStatus('ATTENTION');
-    } else if (get().emergencyStatus === 'ATTENTION' && integrity >= 90) {
-      get().setEmergencyStatus('NORMAL');
-    } else if (get().emergencyStatus === 'ATTENTION' && integrity < 70) {
-      get().setEmergencyStatus('SAFETY_RESTRICTION');
-    } else if (get().emergencyStatus === 'SAFETY_RESTRICTION' && integrity >= 90) {
-      get().setEmergencyStatus('NORMAL');
-    } else if (get().emergencyStatus === 'SAFETY_RESTRICTION' && integrity < 40) {
-      get().setEmergencyStatus('CLOSED');
-    } else if (get().emergencyStatus === 'CLOSED' && integrity >= 70) {
-      get().setEmergencyStatus('SAFETY_RESTRICTION');
-    }
+useEnvironmentStore.subscribe((state, previousState) => {
+  if (state.bridgeIntegrity === previousState.bridgeIntegrity) return;
+
+  const integrity = state.bridgeIntegrity;
+  const status = state.emergencyStatus;
+    const next = integrity < 40 ? 'CLOSED' : integrity < 70 ? 'SAFETY_RESTRICTION' : integrity < 90 ? 'ATTENTION' : 'NORMAL';
+  if (status !== next) {
+    const emergencyRequest: EmergencyRequest | null =
+      next === 'CLOSED' || next === 'SAFETY_RESTRICTION'
+        ? {
+            id: crypto.randomUUID(),
+            timestamp: new Date().toISOString(),
+            severity: next === 'CLOSED' ? 'CRITICAL' : 'HIGH',
+            message: next === 'CLOSED' ? 'BRIDGE UNSAFE — EMERGENCY ONLY' : 'SAFETY RESTRICTION ACTIVE',
+            acknowledged: false,
+          }
+        : null;
+    useEnvironmentStore.setState({ emergencyStatus: next, emergencyRequest });
   }
-);
+});
 
 export function applyScenarioEnvironment(scenario: any) {
   const weatherModes = [
@@ -236,6 +238,8 @@ export function applyScenarioEnvironment(scenario: any) {
     ? 'CYCLONE'
     : weatherModes.includes('HEAVY_RAIN')
       ? 'HEAVY_RAIN'
+      : weatherModes.includes('FOG')
+        ? 'FOG'
       : weatherModes.includes('RAIN')
         ? 'RAIN'
         : 'CLEAR';

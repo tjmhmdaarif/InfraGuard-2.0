@@ -1,3 +1,6 @@
+import type { TrafficDensity, TrafficLevel, VehicleDistribution, VehicleType } from '../traffic';
+import type { WeatherMode } from '../weather';
+
 export interface Scenario {
   scenarioId: string;
   name: string;
@@ -12,16 +15,16 @@ export interface Scenario {
 }
 
 export interface TrafficConfig {
-  density: number;
-  level: string;
-  vehicleDistribution: Record<string, number>;
+  density: TrafficDensity;
+  level: TrafficLevel;
+  vehicleDistribution: VehicleDistribution;
   spawnRate: number;
   specialVehicles?: SpecialVehicle[];
 }
 
 export interface SpecialVehicle {
   vehicleId: string;
-  vehicleType: string;
+  vehicleType: VehicleType;
   weight: number;
   speed: number;
   lane: number;
@@ -30,13 +33,13 @@ export interface SpecialVehicle {
 }
 
 export interface WeatherConfig {
-  initialMode: string;
+  initialMode: WeatherMode;
   transitions: WeatherTransition[];
 }
 
 export interface WeatherTransition {
   time: number;
-  targetMode: string;
+  targetMode: WeatherMode;
   duration: number;
 }
 

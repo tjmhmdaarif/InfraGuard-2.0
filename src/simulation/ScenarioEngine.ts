@@ -1,4 +1,5 @@
-import type { Scenario, ScenarioState, SpecialVehicle } from '../types/scenario';
+import type { Scenario, ScenarioState } from '../types/scenario';
+import type { Vehicle } from '../types/traffic';
 import type { TrafficEngine } from './TrafficEngine';
 import type { WeatherEngine } from './WeatherEngine';
 import type { TelemetryEngine } from './TelemetryEngine';
@@ -128,16 +129,14 @@ export class ScenarioEngine {
 
     scenario.traffic.specialVehicles?.forEach((sv) => {
       if (this.state.elapsedTime >= sv.spawnTime && !this.specialVehiclesSpawned.has(sv.vehicleId)) {
-        const vehicle: Omit<SpecialVehicle, 'vehicleId' | 'spawnTime'> & { vehicleId: string; spawnTime: number } = {
-          vehicleId: sv.vehicleId,
-          vehicleType: sv.vehicleType as any,
+        const vehicle: Omit<Vehicle, 'vehicleId' | 'spawnTime'> = {
+          vehicleType: sv.vehicleType,
           weight: sv.weight,
           speed: sv.speed,
           lane: sv.lane,
           position: { x: -100, y: (sv.lane - 1) * 3.5, z: 0, progress: 0 },
           length: 16,
           width: 2.5,
-          spawnTime: this.getSimulationTime(),
         };
         this.config.trafficEngine.spawnSpecialVehicle(vehicle, this.getSimulationTime());
         this.specialVehiclesSpawned.add(sv.vehicleId);

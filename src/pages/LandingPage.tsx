@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useMotionValue, useTransform, animate, useScroll, useSpring, AnimatePresence } from 'framer-motion';
-import { Activity, Shield, Zap, Radio, BarChart3, Box, ArrowRight, ChevronDown, Cpu, Wind, Layers, GitBranch, TrendingUp, Eye, CheckCircle } from 'lucide-react';
+import { Activity, Shield, Zap, Radio, BarChart3, Box, ArrowRight, ChevronDown, Cpu, Wind, Layers, GitBranch, TrendingUp, Eye, CheckCircle, type LucideIcon } from 'lucide-react';
 
 // ─── Data ──────────────────────────────────────────────────────────────────────
 const FEATURES = [
@@ -164,7 +164,7 @@ function MetricsTicker() {
 }
 
 // ─── Stat card ─────────────────────────────────────────────────────────────────
-function StatCard({ value, suffix, label, icon: Icon, delay }: { value: number; suffix: string; label: string; icon: React.ElementType; delay: number }) {
+function StatCard({ value, suffix, label, icon: Icon, delay }: { value: number; suffix: string; label: string; icon: LucideIcon; delay: number }) {
   const display = useCounter(value, 1.8, delay);
   return (
     <motion.div

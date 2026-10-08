@@ -13,9 +13,9 @@ export function HealthHeatmap({ mode }: HealthHeatmapProps) {
   const { componentHealths, zoneHealths } = useHealthStore();
   const { components } = useBridgeStore();
 
-  if (mode === 'health' || mode === 'none') return null;
-
   const heatmapMeshes = useMemo(() => {
+    if (mode === 'health') return [];
+
     return components.map((comp) => {
       const health = componentHealths.get(comp.componentId);
       if (!health) return null;
@@ -43,6 +43,7 @@ export function HealthHeatmap({ mode }: HealthHeatmapProps) {
     });
   }, [components, componentHealths, mode]);
 
+  if (mode === 'health') return null;
   return <group>{heatmapMeshes}</group>;
 }
 

@@ -1,4 +1,4 @@
-import { SensorType, DataSource, Vector3 } from '../index';
+import type { DataSource, SensorType } from '../sensor';
 
 export interface TelemetryPacket {
   timestamp: string;
@@ -60,7 +60,7 @@ export interface LoadTelemetry {
 
 export type WeatherCondition = 'CLEAR' | 'CLOUDY' | 'RAIN' | 'HEAVY_RAIN' | 'FOG' | 'GOLDEN_HOUR';
 
-export type TelemetryStatus = 'NORMAL' | 'WARNING' | 'CRITICAL' | 'OFFLINE' | 'STALE';
+export type TelemetryStatus = 'NORMAL' | 'WARNING' | 'CRITICAL' | 'OFFLINE' | 'STALE' | 'DEGRADED';
 
 export interface TelemetryQuality {
   noise: number;

@@ -187,7 +187,8 @@ export class TrafficEngine {
   }
 
   setDensity(density: number): void {
-    this.trafficConfig.density = Math.max(0, Math.min(100, density));
+    const boundedDensity = Math.max(0, Math.min(100, density));
+    this.trafficConfig.density = (Math.round(boundedDensity / 25) * 25) as TrafficConfiguration['density'];
     this.state.density = this.trafficConfig.density;
   }
 

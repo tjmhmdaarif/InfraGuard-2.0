@@ -1,20 +1,20 @@
-# InfraGuard
+# InfraGuard 2.0
 
 **An interactive bridge digital-twin demo for exploring synthetic sensor telemetry, traffic scenarios, alerts, and imported bridge geometry.**
 
-[![Open live demo](https://img.shields.io/badge/demo-live-00b7cf?style=for-the-badge)](https://infraguard-twin-github.vercel.app)
+[![Open live demo](https://img.shields.io/badge/demo-live-00b7cf?style=for-the-badge)](https://infraguard-twin.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-64748b?style=for-the-badge)](./LICENSE)
 
-**Source repository:** [tjmhmdaarif/Infraguard---Bridge-Health-Monitoring-Syste-](https://github.com/tjmhmdaarif/Infraguard---Bridge-Health-Monitoring-Syste-)
+**Source repository:** [tjmhmdaarif/InfraGuard-2.0](https://github.com/tjmhmdaarif/InfraGuard-2.0)
 
 > **Demo and engineering-data notice:** InfraGuard currently runs a browser-side simulation. It is not connected to a real MQTT broker, InfluxDB instance, bridge sensors, or structural-analysis solver. Telemetry, alerts, comparisons, and integrity indicators are illustrative only; they are not safety assessments or certified engineering results.
 
 ## Live demo
 
-- **Application:** [infraguard-twin-github.vercel.app](https://infraguard-twin-github.vercel.app)
-- **Digital twin:** [Open the 3D bridge](https://infraguard-twin-github.vercel.app/digital-twin)
-- **Live monitoring:** [View telemetry and charts](https://infraguard-twin-github.vercel.app/live-monitoring)
-- **Bridge models:** [View model import and comparison](https://infraguard-twin-github.vercel.app/bridge-models)
+- **Application:** [infraguard-twin.vercel.app](https://infraguard-twin.vercel.app)
+- **Digital twin:** [Open the 3D bridge](https://infraguard-twin.vercel.app/digital-twin)
+- **Live monitoring:** [View telemetry and charts](https://infraguard-twin.vercel.app/live-monitoring)
+- **Bridge models:** [View model import and comparison](https://infraguard-twin.vercel.app/bridge-models)
 
 ## Screenshots
 
@@ -77,7 +77,7 @@ npm exec -- vite build
 npm run preview
 ```
 
-`npm run build` also runs `tsc -b` before Vite. The current codebase has existing TypeScript errors, so the Vercel deployment uses the Vite bundle command directly. The bundle build is not a substitute for a passing type check.
+`npm run build` runs `tsc -b` before creating the Vite production bundle. Vercel uses this same command so deployment fails if either type-checking or bundling fails.
 
 ## Technology
 
@@ -97,7 +97,7 @@ npm run preview
 
 ## Deployment
 
-The public demo is hosted on [Vercel](https://vercel.com). `vercel.json` configures `npm ci`, a Vite production build, the `dist` output directory, and SPA route rewrites.
+The public demo is hosted on [Vercel](https://vercel.com). `vercel.json` configures `npm ci`, the type-checked production build, the `dist` output directory, and SPA route rewrites.
 
 To create your own deployment, import this repository in Vercel and use the checked-in project configuration. Do not add secrets as `VITE_*` variables: Vite embeds those values into public frontend assets.
 
