@@ -13,7 +13,7 @@ export function RiverSystem() {
   const geometry = useMemo(() => {
     const geo = new THREE.PlaneGeometry(300, 80, 100, 30);
     geo.rotateX(-Math.PI / 2);
-    geo.translate(0, -8, 0);
+    geo.translate(0, -4, 0); // raised so it sits at riverbed level (~y = -4)
     return geo;
   }, []);
 

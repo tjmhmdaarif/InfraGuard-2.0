@@ -7,7 +7,7 @@ export function Scenery() {
   const weatherMode = useEnvironmentStore(s => s.weatherMode);
 
   return (
-    <group position={[0, -2.5, 0]}>
+    <group position={[0, -0.5, 0]}>
       {/* Ground plane with terrain texture color */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[300, 300]} />
