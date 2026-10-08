@@ -147,10 +147,10 @@ export function AnalyticsPage() {
           </div>
           <div className="panel-content">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <LiveChart title="Vibration (g)" unit="g" color="var(--accent-cyan)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'MPU6050')} />
-              <LiveChart title="Strain (µε)" unit="µε" color="var(--accent-amber)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'STRAIN')} />
-              <LiveChart title="Load (kN)" unit="kN" color="var(--accent-green)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'LOAD_CELL')} />
-              <LiveChart title="Displacement (mm)" unit="mm" color="var(--accent-cyan)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'HC_SR04')} />
+              <LiveChart title="Vibration (g)" unit="g" metric="vibration" color="var(--accent-cyan)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'MPU6050')} />
+              <LiveChart title="Strain (µε)" unit="µε" metric="strain" color="var(--accent-amber)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'STRAIN')} />
+              <LiveChart title="Load (kN)" unit="kN" metric="load" color="var(--accent-green)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'LOAD_CELL')} />
+              <LiveChart title="Displacement (mm)" unit="mm" metric="displacement" color="var(--accent-cyan)" dataPoints={Math.min(500, filteredHistory.length)} height={350} data={filteredHistory.filter(p => p.sensorType === 'HC_SR04')} />
             </div>
           </div>
         </motion.div>

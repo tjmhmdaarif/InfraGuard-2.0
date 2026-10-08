@@ -12,6 +12,10 @@ import {
   CloudRain,
   Car,
   Gauge,
+  Activity,
+  AlertTriangle,
+  Battery,
+  Thermometer,
 } from 'lucide-react';
 import { BridgeSceneWrapper } from '../three/BridgeScene';
 import { useSimulationStore } from '../stores/simulationStore';
@@ -32,6 +36,7 @@ export function OverviewPage() {
 
   const onlineCount = getOnlineCount();
   const totalCount = getTotalCount();
+
   const healthScore = useMemo(() => {
     const packets = Array.from(latestPackets.values());
     if (packets.length === 0) {
@@ -42,17 +47,23 @@ export function OverviewPage() {
     }
     return Math.round(packets.reduce((sum, packet) => sum + packet.healthScore, 0) / packets.length);
   }, [latestPackets, getConfigurationsByZone]);
+
   const latestTelemetry = useMemo(
     () => Array.from(latestPackets.values()).sort(
       (first, second) => Date.parse(second.timestamp) - Date.parse(first.timestamp),
     )[0],
     [latestPackets],
   );
+
   const chartPackets = useMemo(() => ({
     vibration: telemetryHistory.filter((packet) => packet.vibration !== undefined).slice(-100),
     strain: telemetryHistory.filter((packet) => packet.strain !== undefined).slice(-100),
     displacement: telemetryHistory.filter((packet) => packet.displacement !== undefined).slice(-100),
+    temperature: telemetryHistory.filter((packet) => packet.temperature !== undefined).slice(-100),
+    rainfall: telemetryHistory.filter((packet) => packet.rainfall !== undefined).slice(-100),
+    load: telemetryHistory.filter((packet) => packet.load !== undefined).slice(-100),
   }), [telemetryHistory]);
+
   const trafficDensity = latestTelemetry?.trafficDensity;
   const weatherCondition = latestTelemetry?.weatherCondition ?? 'WAITING';
   const dataSource = latestTelemetry?.dataSource ?? 'WAITING';
@@ -67,8 +78,9 @@ export function OverviewPage() {
   };
 
   return (
-    <div className="h-full w-full p-6 overflow-y-auto">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="h-full w-full p-6 overflow-y-auto scrollbar-thin">
+      <div className="max-w-8xl mx-auto space-y-6">
+        {/* Header with stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -80,7 +92,7 @@ export function OverviewPage() {
             <p className="text-[var(--fg-secondary)] mt-1">Bridge health monitoring dashboard</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg text-sm font-mono tabular-nums">
+            <span className="px-3 py-1 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg text-sm font-mono tabular-nums text-[var(--fg-secondary)]">
               {formatTime(clock.time)}
             </span>
             <span className="px-3 py-1 bg-[var(--accent-cyan)] text-[var(--bg-primary)] rounded-lg text-sm font-medium">
@@ -89,11 +101,12 @@ export function OverviewPage() {
           </div>
         </motion.div>
 
+        {/* KPI Cards - Responsive Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
           <KpiCard
             title="Bridge Health"
@@ -133,11 +146,12 @@ export function OverviewPage() {
           />
         </motion.div>
 
+        {/* Charts Grid - Full Width on Desktop, Stacked on Mobile */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
         >
           <LiveChart
             title="Vibration (g)"
@@ -166,20 +180,30 @@ export function OverviewPage() {
             data={chartPackets.displacement}
             metric="displacement"
           />
+          <LiveChart
+            title="Temperature (°C)"
+            unit="°C"
+            color="var(--accent-red)"
+            dataPoints={100}
+            height={280}
+            data={chartPackets.temperature}
+            metric="temperature"
+          />
         </motion.div>
 
+        {/* Main Content Grid - Responsive Layout */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+          className="grid grid-cols-1 xl:grid-cols-3 gap-4"
         >
-          <div className="lg:col-span-1 panel min-h-[350px]">
+          <div className="xl:col-span-2 panel min-h-[350px]">
             <div className="panel-header flex items-center justify-between">
               <h3 className="font-medium text-[var(--fg-primary)]">3D Bridge Preview</h3>
               <span className="text-xs px-2 py-1 bg-[var(--bg-primary)] rounded text-[var(--fg-muted)]">Interactive</span>
             </div>
-            <div className="panel-content p-0 h-[300px] relative">
+            <div className="panel-content p-0 h-[350px] relative">
               <BridgeSceneWrapper />
               <button
                 type="button"
@@ -187,7 +211,7 @@ export function OverviewPage() {
                 className="absolute inset-0 z-10 flex items-end justify-center pb-4 cursor-pointer bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent-cyan)]"
                 aria-label="Open the interactive Digital Twin"
               >
-                <span className="px-2 py-1 bg-black/60 text-white text-xs rounded">
+                <span className="px-3 py-1.5 bg-black/60 text-white text-sm rounded-lg backdrop-blur-sm">
                   Click to enter Digital Twin →
                 </span>
               </button>
@@ -207,11 +231,12 @@ export function OverviewPage() {
           </div>
         </motion.div>
 
+        {/* Bottom Status Cards - Responsive Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
           <StatusCard title="Data Source" value={dataSource} icon={<Database className="w-5 h-5" />} status="info" description="Synthetic telemetry engine" />
           <StatusCard
@@ -223,25 +248,13 @@ export function OverviewPage() {
             onClick={() => navigate('/settings')}
           />
           <StatusCard title="Simulation" value={isRunning ? 'RUNNING' : 'PAUSED'} icon={<Zap className="w-5 h-5" />} status={isRunning ? 'normal' : 'warning'} description={`Speed: ${speed}x • Demo mode active`} />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="panel"
-        >
-          <div className="panel-header">
-            <h3 className="font-medium text-[var(--fg-primary)]">System Status</h3>
-          </div>
-          <div className="panel-content">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <SystemStatusItem label="STM32 F446RE" status="SIMULATED" />
-              <SystemStatusItem label="LoRa RA-02" status="SIMULATED" />
-              <SystemStatusItem label="ESP8266 Gateway" status="SIMULATED" />
-              <SystemStatusItem label="MQTT Broker" status="DEMO MODE" />
-            </div>
-          </div>
+          <StatusCard
+            title="System Health"
+            value={healthScore === null ? 'Waiting' : `${healthScore}%`}
+            icon={<Activity className="w-5 h-5" />}
+            status={healthScore === null ? 'warning' : healthScore >= 90 ? 'normal' : healthScore >= 60 ? 'warning' : 'critical'}
+            description={healthScore === null ? 'No telemetry received yet' : 'Bridge structural health'}
+          />
         </motion.div>
       </div>
     </div>
@@ -257,36 +270,19 @@ function StatusCard({ title, value, icon, status, description, onClick }: { titl
   };
 
   return (
-    <button type="button" onClick={onClick} className={`panel w-full text-left ${onClick ? 'cursor-pointer hover:border-[var(--border-secondary)]' : ''}`}>
+    <button type="button" onClick={onClick} className={`panel w-full text-left ${onClick ? 'cursor-pointer hover:border-[var(--border-secondary)] hover:shadow-lg transition-all duration-200' : ''}`}>
       <div className="panel-content">
         <div className="flex items-start gap-4">
-          <div className={`p-3 rounded-lg bg-[var(--bg-tertiary)] ${statusColors[status]}`}>{icon}</div>
+          <div className="p-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-primary)] transition-transform group-hover:scale-105">
+            <div className={statusColors[status]}>{icon}</div>
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-[var(--fg-muted)] uppercase tracking-wide">{title}</p>
+            <p className="text-xs text-[var(--fg-muted)] uppercase tracking-wide font-medium">{title}</p>
             <p className="text-xl font-bold text-[var(--fg-primary)] truncate">{value}</p>
-            <p className="text-sm text-[var(--fg-secondary)] mt-1">{description}</p>
+            <p className="text-sm text-[var(--fg-secondary)] mt-1 leading-relaxed">{description}</p>
           </div>
         </div>
       </div>
     </button>
-  );
-}
-
-function SystemStatusItem({ label, status }: { label: string; status: string }) {
-  const getStatusColor = (s: string) => {
-    if (s === 'CONNECTED' || s === 'ONLINE') return 'text-[var(--accent-green)]';
-    if (s === 'SIMULATED' || s === 'DEMO MODE') return 'text-[var(--accent-blue)]';
-    if (s === 'OFFLINE' || s === 'ERROR') return 'text-[var(--accent-red)]';
-    return 'text-[var(--accent-amber)]';
-  };
-
-  return (
-    <div className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] rounded-lg">
-      <div className={`w-2 h-2 rounded-full ${getStatusColor(status).replace('text-', 'bg-')}`} />
-      <div className="flex-1">
-        <p className="text-sm font-medium text-[var(--fg-primary)]">{label}</p>
-        <p className={`text-xs ${getStatusColor(status)}`}>{status}</p>
-      </div>
-    </div>
   );
 }

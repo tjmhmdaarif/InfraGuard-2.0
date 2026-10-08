@@ -23,19 +23,22 @@ export function BridgeModel({ zones, components, coordinateSystem, showZoneBound
   const floodActive = useEnvironmentStore((state) => state.floodActive);
   const trafficDensity = useEnvironmentStore((state) => state.trafficDensity);
   const finishMode = useEnvironmentStore((state) => state.finishMode);
+  const bridgeIntegrity = useEnvironmentStore((state) => state.bridgeIntegrity);
+  const emergencyStatus = useEnvironmentStore((state) => state.emergencyStatus);
   const stress = Math.min(
     1,
-    (weatherMode === 'RAIN' ? 0.2 : weatherMode === 'HEAVY_RAIN' ? 0.35 : 0) +
+    (weatherMode === 'RAIN' ? 0.2 : weatherMode === 'HEAVY_RAIN' ? 0.35 : weatherMode === 'CYCLONE' ? 0.55 : 0) +
       (floodActive ? 0.55 : 0) +
-      (trafficDensity / 100) * 0.35,
+      (trafficDensity / 100) * 0.35 +
+      (bridgeIntegrity < 40 ? 0.4 : bridgeIntegrity < 70 ? 0.15 : 0),
   );
 
   useEffect(() => {
     const group = bridgeGroup.current;
     if (!group) return;
-    buildBridge(group, coordinateSystem?.scale ?? 1, finishMode);
+    buildBridge(group, coordinateSystem?.scale ?? 1, finishMode, bridgeIntegrity);
     return () => disposeGroup(group);
-  }, [coordinateSystem, finishMode]);
+  }, [coordinateSystem, finishMode, bridgeIntegrity]);
 
   useFrame((state) => {
     if (!bridgeRoot.current) return;
@@ -59,11 +62,25 @@ export function BridgeModel({ zones, components, coordinateSystem, showZoneBound
       <group ref={bridgeGroup} />
       {showZoneBoundaries && <ZoneBoundaries zones={zones} />}
       {showStructuralLabels && <StructuralLabels components={components} />}
+      {/* Bridge emergency beacon when critical */}
+      {emergencyStatus === 'CLOSED' && (
+        <mesh position={[0, 2.5, 0]} rotation={[0, 0, 0]}>
+          <sphereGeometry args={[0.6, 16, 16]} />
+          <meshBasicMaterial color="#ef4444" transparent opacity={0.9} />
+        </mesh>
+      )}
+      {/* Center deck warning label when restricted */}
+      {(emergencyStatus === 'SAFETY_RESTRICTION' || emergencyStatus === 'CLOSED') && (
+        <mesh position={[0, 4.2, 0]}>
+          <planeGeometry args={[6, 0.6]} />
+          <meshBasicMaterial color="#f59e0b" transparent opacity={0.85} side={THREE.DoubleSide} />
+        </mesh>
+      )}
     </group>
   );
 }
 
-function buildBridge(group: THREE.Group, scale: number, finishMode: 'PBR' | 'WIREFRAME' | 'STRESS') {
+function buildBridge(group: THREE.Group, scale: number, finishMode: 'PBR' | 'WIREFRAME' | 'STRESS', bridgeIntegrity: number) {
   disposeGroup(group);
   const length = 64 * scale;
   const height = 8 * scale;
@@ -72,14 +89,16 @@ function buildBridge(group: THREE.Group, scale: number, finishMode: 'PBR' | 'WIR
   const panels = 8;
   const deckY = -height / 2;
   const wireframe = finishMode === 'WIREFRAME';
+  const steelColor = bridgeIntegrity < 40 ? '#ef4444' : bridgeIntegrity < 70 ? '#f59e0b' : '#62717b';
+  const stressColor = finishMode === 'STRESS' ? (bridgeIntegrity < 40 ? '#ef4444' : '#ee725e') : steelColor;
   const steel = new THREE.MeshStandardMaterial({
-    color: finishMode === 'STRESS' ? '#bd5549' : '#62717b',
+    color: stressColor,
     metalness: wireframe ? 0.18 : 0.78,
     roughness: wireframe ? 0.9 : 0.38,
     wireframe,
   });
   const weatheringSteel = new THREE.MeshStandardMaterial({
-    color: finishMode === 'STRESS' ? '#ee725e' : '#a65e3f',
+    color: finishMode === 'STRESS' ? (bridgeIntegrity < 40 ? '#ef4444' : '#ee725e') : (bridgeIntegrity < 40 ? '#a65e3f' : '#a65e3f'),
     metalness: 0.38,
     roughness: 0.74,
     wireframe,

@@ -1,4 +1,4 @@
-export type WeatherMode = 'CLEAR' | 'CLOUDY' | 'RAIN' | 'HEAVY_RAIN' | 'FOG' | 'GOLDEN_HOUR';
+export type WeatherMode = 'CLEAR' | 'CLOUDY' | 'RAIN' | 'HEAVY_RAIN' | 'FOG' | 'GOLDEN_HOUR' | 'CYCLONE';
 
 export interface WeatherState {
   mode: WeatherMode;
@@ -78,6 +78,15 @@ export const WEATHER_CONFIGS: Record<WeatherMode, WeatherConfiguration> = {
     rainfallRange: [0, 0],
     windSpeedRange: [0, 10],
     transitionDuration: 60,
+  },
+  CYCLONE: {
+    mode: 'CYCLONE',
+    intensity: 1.0,
+    temperatureRange: [10, 20],
+    humidityRange: [90, 100],
+    rainfallRange: [30, 80],
+    windSpeedRange: [80, 180],
+    transitionDuration: 10,
   },
 };
 

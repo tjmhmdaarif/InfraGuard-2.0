@@ -10,6 +10,7 @@ import { TrafficFlowSystem } from './systems/TrafficFlowSystem';
 import { WeatherSystem } from './systems/WeatherSystem';
 import { RiverSystem } from './systems/RiverSystem';
 import { Environment } from './components/Environment';
+import { Scenery } from './components/Scenery';
 import { HealthHeatmap } from './components/HealthHeatmap';
 import { StructuralHighlight } from './components/StructuralHighlight';
 import { LoadVisualization } from './components/LoadVisualization';
@@ -160,6 +161,7 @@ export function BridgeScene({ children }: { children?: ReactNode }) {
       <TrafficFlowSystem />
       <WeatherSystem />
       <RiverSystem />
+      <Scenery />
       {heatmapEnabled && heatmapMode !== 'none' && <HealthHeatmap mode={heatmapMode} />}
       <StructuralHighlight components={components} />
       <LoadVisualization />

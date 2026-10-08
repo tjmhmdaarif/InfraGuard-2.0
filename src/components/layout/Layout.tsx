@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,12 +15,15 @@ import {
   Settings,
   Menu,
   X,
-  ChevronDown,
+  ChevronRight,
   Zap,
   Database,
-  Wifi,
-  Satellite,
   Info,
+  Play,
+  Pause,
+  RotateCcw,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useUIStore } from '../../stores/uiStore';
 import { useSimulationStore } from '../../stores/simulationStore';
@@ -28,21 +31,93 @@ import { useSensorStore } from '../../stores/sensorStore';
 import { useAlertStore } from '../../stores/alertStore';
 
 const NAV_ITEMS = [
-  { path: '/overview', label: 'Overview', icon: LayoutDashboard, shortcut: '1' },
-  { path: '/digital-twin', label: 'Digital Twin', icon: Box, shortcut: '2' },
-  { path: '/live-monitoring', label: 'Live Monitoring', icon: Activity, shortcut: '3' },
-  { path: '/sensors', label: 'Sensors', icon: Radio, shortcut: '4' },
-  { path: '/analytics', label: 'Analytics', icon: BarChart3, shortcut: '5' },
-  { path: '/scenarios', label: 'Scenarios', icon: PlayCircle, shortcut: '6' },
-  { path: '/bridge-models', label: 'Bridge Models', icon: Library, shortcut: '7' },
-  { path: '/alerts', label: 'Alerts', icon: AlertTriangle, shortcut: '8' },
-  { path: '/data-flow', label: 'Data Flow', icon: GitBranch, shortcut: '9' },
-  { path: '/hardware', label: 'Hardware', icon: Cpu, shortcut: '0' },
-  { path: '/settings', label: 'Settings', icon: Settings, shortcut: 'S' },
+  { path: '/overview',        label: 'Overview',         icon: LayoutDashboard, shortcut: '1' },
+  { path: '/digital-twin',    label: 'Digital Twin',     icon: Box,             shortcut: '2' },
+  { path: '/live-monitoring', label: 'Live Monitoring',  icon: Activity,        shortcut: '3' },
+  { path: '/sensors',         label: 'Sensors',          icon: Radio,           shortcut: '4' },
+  { path: '/analytics',       label: 'Analytics',        icon: BarChart3,       shortcut: '5' },
+  { path: '/scenarios',       label: 'Scenarios',        icon: PlayCircle,      shortcut: '6' },
+  { path: '/bridge-models',   label: 'Bridge Models',    icon: Library,         shortcut: '7' },
+  { path: '/alerts',          label: 'Alerts',           icon: AlertTriangle,   shortcut: '8' },
+  { path: '/data-flow',       label: 'Data Flow',        icon: GitBranch,       shortcut: '9' },
+  { path: '/hardware',        label: 'Hardware',         icon: Cpu,             shortcut: '0' },
+  { path: '/settings',        label: 'Settings',         icon: Settings,        shortcut: 'S' },
 ];
+
+// ── Styled toggle switch ──────────────────────────────────────────────────────
+function ToggleSwitch({
+  checked,
+  onChange,
+  label,
+  id,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+  id: string;
+}) {
+  return (
+    <label htmlFor={id} className="flex items-center gap-3 cursor-pointer select-none group">
+      <div className="relative">
+        <input
+          type="checkbox"
+          id={id}
+          checked={checked}
+          onChange={onChange}
+          className="sr-only"
+        />
+        {/* Track */}
+        <motion.div
+          className="w-9 h-5 rounded-full border transition-colors"
+          animate={{
+            backgroundColor: checked ? 'var(--accent-cyan)' : 'var(--bg-primary)',
+            borderColor: checked ? 'var(--accent-cyan)' : 'var(--border-secondary)',
+          }}
+          transition={{ duration: 0.2 }}
+        />
+        {/* Thumb */}
+        <motion.div
+          className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm"
+          animate={{ x: checked ? 16 : 0 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        />
+      </div>
+      <span className="text-sm text-[var(--fg-secondary)] group-hover:text-[var(--fg-primary)] transition-colors">
+        {label}
+      </span>
+    </label>
+  );
+}
+
+// ── Theme toggle button ───────────────────────────────────────────────────────
+function ThemeToggle() {
+  const { theme, toggleTheme } = useUIStore();
+  const isDark = theme === 'dark';
+
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      className="p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--fg-muted)] hover:text-[var(--fg-primary)] transition-colors"
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={isDark ? 'moon' : 'sun'}
+          initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+          animate={{ rotate: 0, opacity: 1, scale: 1 }}
+          exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+          transition={{ duration: 0.2 }}
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </motion.div>
+      </AnimatePresence>
+    </button>
+  );
+}
 
 export function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { currentView, setView, toggleCommandPalette, commandPaletteOpen } = useUIStore();
@@ -53,42 +128,54 @@ export function Layout() {
   const onlineCount = getOnlineCount();
   const totalCount = getTotalCount();
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault();
-      toggleCommandPalette();
-    }
-    if (e.key >= '1' && e.key <= '9') {
-      const index = parseInt(e.key) - 1;
-      if (NAV_ITEMS[index]) setView(NAV_ITEMS[index].path.replace('/', '') as any);
-    }
-    if (e.key === ' ') {
-      e.preventDefault();
-      isRunning ? pause() : play();
-    }
-    if (e.key === 'r' || e.key === 'R') {
-      reset();
-    }
-    if (e.key === 'd' || e.key === 'D') {
-      setView('digital-twin');
-    }
-  };
-
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when typing in an input/textarea
+      if ((e.target as HTMLElement).closest('input, textarea, select')) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleCommandPalette();
+        return;
+      }
+      if (e.key >= '1' && e.key <= '9') {
+        const index = parseInt(e.key) - 1;
+        if (NAV_ITEMS[index]) {
+          navigate(NAV_ITEMS[index].path);
+          setView(NAV_ITEMS[index].path.replace('/', '') as any);
+        }
+        return;
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        isRunning ? pause() : play();
+        return;
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        reset();
+        return;
+      }
+      if (e.key === 'd' || e.key === 'D') {
+        navigate('/digital-twin');
+        setView('digital-twin');
+      }
+    };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRunning, play, pause, reset, setView, toggleCommandPalette]);
+  }, [isRunning, play, pause, reset, setView, toggleCommandPalette, navigate]);
 
   return (
     <div className="h-dvh min-h-0 w-full flex bg-[var(--bg-primary)] text-[var(--fg-primary)]">
+
+      {/* ── Sidebar ──────────────────────────────────────────────────── */}
       <AnimatePresence mode="wait">
         {sidebarOpen && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
+            animate={{ width: 256, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] flex flex-col overflow-hidden"
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] flex flex-col overflow-hidden flex-shrink-0"
           >
             <SidebarHeader onToggle={() => setSidebarOpen(false)} />
             <Navigation currentPath={location.pathname} />
@@ -97,6 +184,7 @@ export function Layout() {
         )}
       </AnimatePresence>
 
+      {/* ── Main area ────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar
           onMenuClick={() => setMobileMenuOpen(true)}
@@ -108,10 +196,10 @@ export function Layout() {
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
+              transition={{ duration: 0.16, ease: 'easeOut' }}
               className="h-full"
             >
               <Outlet />
@@ -133,111 +221,153 @@ export function Layout() {
         />
       </div>
 
-      {mobileMenuOpen && (
-        <MobileMenu onClose={() => setMobileMenuOpen(false)} currentPath={location.pathname} />
-      )}
+      {/* ── Mobile menu ──────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <MobileMenu onClose={() => setMobileMenuOpen(false)} currentPath={location.pathname} />
+        )}
+      </AnimatePresence>
 
-      {commandPaletteOpen && <CommandPalette onClose={toggleCommandPalette} />}
+      {/* ── Command palette ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {commandPaletteOpen && <CommandPalette onClose={toggleCommandPalette} />}
+      </AnimatePresence>
     </div>
   );
 }
 
+// ── SidebarHeader ─────────────────────────────────────────────────────────────
 function SidebarHeader({ onToggle }: { onToggle: () => void }) {
   return (
     <div className="p-4 border-b border-[var(--border-primary)] flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] flex items-center justify-center">
-          <Zap className="w-6 h-6 text-[var(--bg-primary)]" />
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] flex items-center justify-center flex-shrink-0">
+          <Zap className="w-5 h-5 text-[var(--bg-primary)]" />
         </div>
-        <div>
-          <h1 className="font-semibold text-lg text-[var(--fg-primary)]">InfraGuard</h1>
-          <p className="text-xs text-[var(--fg-muted)]">Digital Twin Platform</p>
+        <div className="min-w-0">
+          <h1 className="font-semibold text-base text-[var(--fg-primary)] leading-tight">InfraGuard</h1>
+          <p className="text-[10px] text-[var(--fg-muted)] uppercase tracking-wide">Digital Twin</p>
         </div>
       </div>
-      <button onClick={onToggle} className="p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--fg-muted)]" aria-label="Close sidebar">
-        <X className="w-5 h-5" />
+      <button
+        onClick={onToggle}
+        className="p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-gray-400 hover:text-gray-200 transition-colors"
+        aria-label="Collapse sidebar"
+        title="Collapse sidebar"
+      >
+        <X className="w-4 h-4" />
       </button>
     </div>
   );
 }
 
+// ── Navigation ────────────────────────────────────────────────────────────────
 function Navigation({ currentPath }: { currentPath: string }) {
   return (
-    <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-      {NAV_ITEMS.map((item) => {
-        const isActive = currentPath === item.path;
-        return (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-              ${isActive
-                ? 'bg-[var(--accent-cyan)] text-[var(--bg-primary)] shadow-[0_0_0_1px_var(--accent-cyan)]'
-                : 'text-[var(--fg-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--fg-primary)]'
-              }
-            `}
-          >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
-            <span className="flex-1 truncate">{item.label}</span>
-            <kbd className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-primary)] rounded text-[var(--fg-muted)] font-mono">
-              {item.shortcut}
-            </kbd>
-          </NavLink>
-        );
-      })}
+    <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-thin">
+      {NAV_ITEMS.map((item) => (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          className={({ isActive }) =>
+            `relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group
+            ${isActive
+              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+              : 'text-gray-400 hover:bg-white/5 hover:text-gray-100 border border-transparent'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-cyan-400"
+                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                />
+              )}
+              <item.icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? 'text-cyan-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
+              <span className="flex-1 truncate">{item.label}</span>
+              <kbd className={`text-[10px] px-1.5 py-0.5 rounded font-mono transition-opacity ${
+                isActive ? 'opacity-60 bg-cyan-500/20 text-cyan-400' : 'opacity-0 group-hover:opacity-50 bg-white/5 text-gray-500'
+              }`}>
+                {item.shortcut}
+              </kbd>
+            </>
+          )}
+        </NavLink>
+      ))}
     </nav>
   );
 }
 
+// ── SidebarFooter ─────────────────────────────────────────────────────────────
 function SidebarFooter() {
   const { developerMode, toggleDeveloperMode } = useUIStore();
 
   return (
-    <div className="p-3 border-t border-[var(--border-primary)] space-y-2">
-      <label className="flex items-center gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={developerMode}
-          onChange={toggleDeveloperMode}
-          className="w-4 h-4 accent-[var(--accent-cyan)]"
-        />
-        <span className="text-sm text-[var(--fg-secondary)]">Developer Mode</span>
-      </label>
-      <div className="text-xs text-[var(--fg-muted)] flex items-center justify-between">
-        <span>v1.0.0-dev</span>
-        <Info className="w-4 h-4 opacity-50" />
+    <div className="p-3 border-t border-[var(--border-primary)] space-y-3">
+      <ToggleSwitch
+        id="dev-mode"
+        checked={developerMode}
+        onChange={toggleDeveloperMode}
+        label="Developer Mode"
+      />
+      <div className="text-[11px] text-[var(--fg-muted)] flex items-center justify-between">
+        <span className="font-mono">v1.0.0-dev</span>
+        <Info className="w-3.5 h-3.5 opacity-40" />
       </div>
     </div>
   );
 }
 
+// ── TopBar ────────────────────────────────────────────────────────────────────
 function TopBar({
   onMenuClick,
   sidebarOpen,
   onSidebarToggle,
 }: { onMenuClick: () => void; sidebarOpen: boolean; onSidebarToggle: () => void }) {
   return (
-    <header className="h-14 bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] flex items-center justify-between px-4 gap-4">
-      <button onClick={onMenuClick} className="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-tertiary)]">
-        <Menu className="w-5 h-5" />
-      </button>
+    <header className="h-12 bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] flex items-center justify-between px-3 gap-3 flex-shrink-0">
+      {/* Left: menu + sidebar toggle */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-gray-400 hover:text-gray-100 transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onSidebarToggle}
+          className="hidden lg:flex items-center justify-center p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-gray-400 hover:text-gray-100 transition-colors"
+          aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          <motion.div animate={{ rotate: sidebarOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
+            <ChevronRight className="w-4 h-4" />
+          </motion.div>
+        </button>
+      </div>
 
-      <div className="flex-1 flex items-center justify-center">
+      {/* Center: breadcrumb — vertically centered */}
+      <div className="flex-1 flex items-center justify-center min-w-0">
         <Breadcrumb />
       </div>
 
-      <div className="flex items-center gap-3">
+      {/* Right: indicators + theme — all vertically centered */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         <DataSourceIndicator />
         <ConnectionStatus />
+        <div className="w-px h-5 bg-[var(--border-primary)]" />
+        <ThemeToggle />
       </div>
     </header>
   );
 }
 
+// ── Breadcrumb ────────────────────────────────────────────────────────────────
 function Breadcrumb() {
   const location = useLocation();
-  const segments = location.pathname.split('/').filter(Boolean);
   const { currentView } = useUIStore();
 
   const labels: Record<string, string> = {
@@ -250,40 +380,42 @@ function Breadcrumb() {
     'bridge-models': 'Bridge Models',
     alerts: 'Alerts',
     'data-flow': 'Data Flow',
-    hardware: 'Hardware Integration',
+    hardware: 'Hardware',
     settings: 'Settings',
   };
 
+  const segment = location.pathname.split('/').filter(Boolean)[0] ?? '';
+
   return (
-    <ol className="flex items-center gap-2 text-sm">
-      <li className="text-[var(--fg-muted)]">InfraGuard</li>
-      <ChevronDown className="w-4 h-4 text-[var(--fg-muted)]" />
-      <li className="text-[var(--fg-primary)] font-medium">{labels[currentView] || 'Dashboard'}</li>
+    <ol className="flex items-center gap-1.5 text-sm">
+      <li className="text-[var(--fg-muted)] hidden sm:block">InfraGuard</li>
+      <ChevronRight className="w-3.5 h-3.5 text-[var(--fg-muted)] hidden sm:block" />
+      <li className="text-[var(--fg-primary)] font-medium">{labels[segment] ?? 'Dashboard'}</li>
     </ol>
   );
 }
 
+// ── DataSourceIndicator ───────────────────────────────────────────────────────
 function DataSourceIndicator() {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-primary)]">
-      <Database className="w-4 h-4 text-[var(--accent-cyan)]" />
-      <span className="text-xs font-medium text-[var(--fg-primary)]">SIMULATION</span>
-      <span className="text-[10px] px-1.5 py-0.5 bg-[var(--accent-cyan)] text-[var(--bg-primary)] rounded font-mono">DEMO</span>
+    <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-primary)]">
+      <Database className="w-3.5 h-3.5 text-[var(--accent-cyan)]" />
+      <span className="text-[11px] font-medium text-[var(--fg-secondary)] uppercase tracking-wide">Simulation</span>
+      <span className="text-[10px] px-1.5 py-0.5 bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] rounded font-mono">DEMO</span>
     </div>
   );
 }
 
+// ── ConnectionStatus ──────────────────────────────────────────────────────────
 function ConnectionStatus() {
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-1">
-        <span className="w-2 h-2 rounded-full bg-[var(--accent-green)]"></span>
-        <span className="text-xs text-[var(--fg-secondary)]">MQTT</span>
-      </div>
-      <div className="flex items-center gap-1">
-        <span className="w-2 h-2 rounded-full bg-[var(--accent-green)]"></span>
-        <span className="text-xs text-[var(--fg-secondary)]">InfluxDB</span>
-      </div>
+    <div className="hidden md:flex items-center gap-3">
+      {[{ label: 'MQTT' }, { label: 'DB' }].map(({ label }) => (
+        <div key={label} className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)] animate-pulse" />
+          <span className="text-[11px] text-[var(--fg-muted)]">{label}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -319,53 +451,59 @@ function SimulationStatusBar({
   };
 
   return (
-    <footer className="h-12 bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] flex items-center justify-between px-4 gap-4">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <button onClick={isRunning ? onPause : onPlay} className="p-2 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-colors">
-            {isRunning ? <span className="w-5 h-5" style={{ background: 'currentColor', mask: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 24 24%22%3E%3Crect x=%226%22 y=%224%22 width=%224%22 height=%2216%22 fill=%22currentColor%22/%3E%3Crect x=%2214%22 y=%224%22 width=%224%22 height=%2216%22 fill=%22currentColor%22/%3E%3C/svg%3E")' }} /> : <span className="w-5 h-5" style={{ background: 'currentColor', mask: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 24 24%22%3E%3Cpath d=%22M8 5v14l11-7z%22 fill=%22currentColor%22/%3E%3C/svg%3E")' }} />}
-          </button>
-          <button onClick={onReset} className="p-2 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] transition-colors" title="Reset">
-            <span className="w-5 h-5" style={{ background: 'currentColor', mask: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 24 24%22%3E%3Cpath d=%22M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8%22 fill=%22currentColor%22/%3E%3C/svg%3E")' }} />
-          </button>
-        </div>
-        <div className="text-mono text-sm font-medium tabular-nums text-[var(--fg-primary)]">
-          {formatTime(clock.time)}
-        </div>
+    <footer className="h-9 bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] flex items-center justify-between px-3 gap-3 flex-shrink-0">
+      {/* Minimal playback row */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={isRunning ? onPause : onPlay}
+          aria-label={isRunning ? 'Pause simulation' : 'Play simulation'}
+          className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-gray-400 hover:text-gray-100 transition-colors"
+        >
+          {isRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+        </button>
+        <button
+          onClick={onReset}
+          aria-label="Reset simulation"
+          className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          <RotateCcw className="w-3 h-3" />
+        </button>
+        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-gray-600'}`} />
+        <span className="text-xs font-mono tabular-nums text-gray-300">{formatTime(clock.time)}</span>
         <select
           value={speed}
           onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
-          className="px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded text-sm text-[var(--fg-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-cyan)]"
+          className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded text-xs text-gray-300 focus:outline-none cursor-pointer"
         >
-          <option value={0.1}>0.1x</option>
-          <option value={0.25}>0.25x</option>
-          <option value={0.5}>0.5x</option>
-          <option value={1}>1x</option>
-          <option value={2}>2x</option>
-          <option value={5}>5x</option>
-          <option value={10}>10x</option>
+          {[0.25, 0.5, 1, 2, 5, 10].map((v) => <option key={v} value={v}>{v}x</option>)}
         </select>
       </div>
 
-      <div className="flex-1" />
-
-      <div className="flex items-center gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[var(--accent-green)]" />
-          <span className="text-[var(--fg-secondary)]">Sensors: {onlineCount}/{totalCount}</span>
-        </div>
+      {/* Right stats */}
+      <div className="flex items-center gap-4 text-xs text-gray-500">
+        <span>
+          <span className={onlineCount === totalCount ? 'text-emerald-400' : 'text-amber-400'}>{onlineCount}</span>
+          <span>/{totalCount} sensors</span>
+        </span>
         {alertCount > 0 && (
-          <div className="flex items-center gap-2 text-[var(--accent-amber)]">
-            <AlertTriangle className="w-4 h-4" />
-            <span>{alertCount} unacknowledged</span>
-          </div>
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-1 text-amber-400"
+          >
+            <AlertTriangle className="w-3 h-3" />
+            {alertCount}
+          </motion.span>
         )}
       </div>
     </footer>
   );
 }
 
+// ── MobileMenu ────────────────────────────────────────────────────────────────
 function MobileMenu({ onClose, currentPath }: { onClose: () => void; currentPath: string }) {
+  const navigate = useNavigate();
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -373,29 +511,44 @@ function MobileMenu({ onClose, currentPath }: { onClose: () => void; currentPath
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 lg:hidden"
     >
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <motion.div
-        initial={{ x: -300 }}
+        initial={{ x: -280 }}
         animate={{ x: 0 }}
-        exit={{ x: -300 }}
-        className="absolute left-0 top-0 h-full w-72 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] p-4"
+        exit={{ x: -280 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+        className="absolute left-0 top-0 h-full w-72 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] flex flex-col"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-semibold">Navigation</h2>
-          <button onClick={onClose} className="p-2"><X className="w-5 h-5" /></button>
+        <div className="p-4 border-b border-[var(--border-primary)] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-blue)] flex items-center justify-center">
+              <Zap className="w-4 h-4 text-[var(--bg-primary)]" />
+            </div>
+            <span className="font-semibold text-[var(--fg-primary)]">InfraGuard</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--fg-muted)] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <nav className="space-y-1">
+
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-thin">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.path}
-              onClick={() => { onClose(); window.location.href = item.path; }}
+              onClick={() => {
+                navigate(item.path);
+                onClose();
+              }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 currentPath === item.path
-                  ? 'bg-[var(--accent-cyan)] text-[var(--bg-primary)]'
-                  : 'text-[var(--fg-secondary)] hover:bg-[var(--bg-tertiary)]'
+                  ? 'bg-[var(--accent-cyan)]/10 text-[var(--accent-cyan)]'
+                  : 'text-[var(--fg-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--fg-primary)]'
               }`}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-4 h-4 flex-shrink-0" />
               <span>{item.label}</span>
             </button>
           ))}
@@ -405,69 +558,87 @@ function MobileMenu({ onClose, currentPath }: { onClose: () => void; currentPath
   );
 }
 
+// ── CommandPalette ────────────────────────────────────────────────────────────
 function CommandPalette({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('');
+  const navigate = useNavigate();
+  const { play, pause, reset } = useSimulationStore();
 
   const COMMANDS = [
-    { label: 'Open Digital Twin', action: () => window.location.href = '/digital-twin', keys: ['Ctrl', '1'] },
-    { label: 'Open Dashboard', action: () => window.location.href = '/overview', keys: ['Ctrl', '2'] },
-    { label: 'Run Demo', action: () => console.log('Run demo'), keys: ['Ctrl', 'D'] },
-    { label: 'Pause Simulation', action: () => console.log('Pause'), keys: ['Space'] },
-    { label: 'Reset Simulation', action: () => console.log('Reset'), keys: ['R'] },
-    { label: 'Toggle Traffic', action: () => console.log('Toggle traffic'), keys: ['T'] },
-    { label: 'Toggle Weather', action: () => console.log('Toggle weather'), keys: ['W'] },
-    { label: 'Show Critical Sensors', action: () => console.log('Show critical'), keys: ['Ctrl', 'Shift', 'C'] },
-    { label: 'Import Bridge', action: () => window.location.href = '/bridge-models', keys: ['Ctrl', 'I'] },
-    { label: 'Add Sensor', action: () => console.log('Add sensor'), keys: ['Ctrl', 'Shift', 'S'] },
-    { label: 'Open Analytics', action: () => window.location.href = '/analytics', keys: ['Ctrl', '4'] },
-    { label: 'Open Data Flow Inspector', action: () => window.location.href = '/data-flow', keys: ['Ctrl', 'Shift', 'D'] },
+    { label: 'Open Digital Twin',         action: () => navigate('/digital-twin'),   keys: ['2'] },
+    { label: 'Open Dashboard',            action: () => navigate('/overview'),        keys: ['1'] },
+    { label: 'Open Analytics',            action: () => navigate('/analytics'),       keys: ['5'] },
+    { label: 'Open Data Flow Inspector',  action: () => navigate('/data-flow'),       keys: ['9'] },
+    { label: 'Import Bridge Model',       action: () => navigate('/bridge-models'),   keys: ['7'] },
+    { label: 'Open Alerts',              action: () => navigate('/alerts'),           keys: ['8'] },
+    { label: 'Play Simulation',           action: play,                               keys: ['Space'] },
+    { label: 'Pause Simulation',          action: pause,                              keys: ['Space'] },
+    { label: 'Reset Simulation',          action: reset,                              keys: ['R'] },
+    { label: 'Open Settings',            action: () => navigate('/settings'),         keys: ['S'] },
   ];
 
-  const filtered = COMMANDS.filter((c) =>
-    c.label.toLowerCase().includes(query.toLowerCase()) ||
-    c.keys.some((k) => k.toLowerCase().includes(query.toLowerCase()))
+  const filtered = COMMANDS.filter(
+    (c) =>
+      c.label.toLowerCase().includes(query.toLowerCase()) ||
+      c.keys.some((k) => k.toLowerCase().includes(query.toLowerCase())),
   );
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <motion.div
-        className="w-full max-w-2xl bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl overflow-hidden shadow-2xl"
+        initial={{ opacity: 0, scale: 0.96, y: -8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: -8 }}
+        transition={{ duration: 0.15 }}
+        className="relative w-full max-w-xl bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl overflow-hidden shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-[var(--border-primary)]">
-          <div className="relative">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Type a command or search... (⌘K to close)"
-              className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg px-4 py-3 text-[var(--fg-primary)] placeholder-[var(--fg-muted)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-cyan)]"
-              autoFocus
-            />
-          </div>
+        {/* Search input */}
+        <div className="p-3 border-b border-[var(--border-primary)]">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search commands… (⌘K to close)"
+            className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg px-4 py-2.5 text-[var(--fg-primary)] placeholder-[var(--fg-muted)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-cyan)] transition"
+            autoFocus
+          />
         </div>
-        <div className="max-h-96 overflow-y-auto">
+
+        {/* Results */}
+        <div className="max-h-80 overflow-y-auto scrollbar-thin">
+          {filtered.length === 0 && (
+            <p className="px-4 py-6 text-center text-sm text-[var(--fg-muted)]">No commands found</p>
+          )}
           {filtered.map((cmd, i) => (
             <button
               key={i}
               onClick={() => { cmd.action(); onClose(); }}
               className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors border-b border-[var(--border-primary)] last:border-0"
             >
-              <span className="text-[var(--fg-primary)]">{cmd.label}</span>
-              <span className="flex items-center gap-1 text-[var(--fg-muted)] text-xs font-mono">
+              <span className="text-sm text-[var(--fg-primary)]">{cmd.label}</span>
+              <span className="flex items-center gap-1">
                 {cmd.keys.map((k, j) => (
-                  <kbd key={j} className="px-1.5 py-0.5 bg-[var(--bg-primary)] rounded text-[10px]">{k}</kbd>
+                  <kbd key={j} className="px-1.5 py-0.5 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[10px] text-[var(--fg-muted)] font-mono">
+                    {k}
+                  </kbd>
                 ))}
               </span>
             </button>
           ))}
+        </div>
+
+        <div className="px-4 py-2 border-t border-[var(--border-primary)] flex items-center gap-4 text-[10px] text-[var(--fg-muted)]">
+          <span><kbd className="font-mono">↑↓</kbd> navigate</span>
+          <span><kbd className="font-mono">↵</kbd> select</span>
+          <span><kbd className="font-mono">Esc</kbd> close</span>
         </div>
       </motion.div>
     </motion.div>

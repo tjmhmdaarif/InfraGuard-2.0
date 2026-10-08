@@ -20,6 +20,7 @@ import { useBridgeStore } from '@/stores/bridgeStore';
 import { SimulationEngine } from '@/simulation/SimulationEngine';
 import { calibrationEngine } from '@/calibration/CalibrationEngine';
 import { useEffect } from 'react';
+import { useScenarioStore } from '@/stores/scenarioStore';
 
 const queryClient = new QueryClient();
 
@@ -112,4 +113,3 @@ export default function App() {
   );
 }
 
-import { useScenarioStore } from '@/stores/scenarioStore';

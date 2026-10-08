@@ -31,6 +31,7 @@ export interface UIState {
   simulationMonitorOpen: boolean;
   dataFlowInspectorOpen: boolean;
   commandPaletteOpen: boolean;
+  theme: 'dark' | 'light';
   notifications: Notification[];
   setView: (view: ViewMode) => void;
   goBack: () => void;
@@ -50,6 +51,7 @@ export interface UIState {
   toggleSimulationMonitor: () => void;
   toggleDataFlowInspector: () => void;
   toggleCommandPalette: () => void;
+  toggleTheme: () => void;
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
@@ -91,6 +93,7 @@ export const useUIStore = create<UIState>()(
     simulationMonitorOpen: false,
     dataFlowInspectorOpen: false,
     commandPaletteOpen: false,
+    theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     notifications: [],
 
     setView: (view: ViewMode) =>
@@ -163,6 +166,16 @@ export const useUIStore = create<UIState>()(
     toggleCommandPalette: () =>
       set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
 
+    toggleTheme: () =>
+      set((state) => {
+        const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
+        if (!document) return { theme: nextTheme };
+        document.documentElement.classList.remove(state.theme);
+        document.documentElement.classList.add(nextTheme);
+        localStorage.setItem('theme', nextTheme);
+        return { theme: nextTheme };
+      }),
+
     addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) =>
       set((state) => ({
         notifications: [
@@ -190,6 +203,7 @@ export const useUIActions = () => useUIStore((state) => ({
   setCameraPosition: state.setCameraPosition,
   setCameraTarget: state.setCameraTarget,
   togglePanel: state.togglePanel,
+  setPanelState: state.setPanelState,
   setHeatmapMode: state.setHeatmapMode,
   toggleHeatmap: state.toggleHeatmap,
   toggleSensorMarkers: state.toggleSensorMarkers,
@@ -200,5 +214,8 @@ export const useUIActions = () => useUIStore((state) => ({
   toggleSimulationMonitor: state.toggleSimulationMonitor,
   toggleDataFlowInspector: state.toggleDataFlowInspector,
   toggleCommandPalette: state.toggleCommandPalette,
+  toggleTheme: state.toggleTheme,
   addNotification: state.addNotification,
+  removeNotification: state.removeNotification,
+  clearNotifications: state.clearNotifications,
 }));

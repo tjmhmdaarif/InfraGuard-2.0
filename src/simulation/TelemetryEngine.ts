@@ -43,6 +43,7 @@ export class TelemetryEngine {
   private sensorFailureStates: Map<string, { type: string; severity: number; startTime: number }>;
   private lastTelemetryTime: number;
   private packetCounter: number;
+  private sensorBatteryLevels: Map<string, number>;
 
   constructor(config: TelemetryEngineConfig) {
     this.config = config;
@@ -55,6 +56,7 @@ export class TelemetryEngine {
     this.sensorFailureStates = new Map();
     this.lastTelemetryTime = 0;
     this.packetCounter = 0;
+    this.sensorBatteryLevels = new Map();
     this.initializeBaselines();
   }
 
@@ -82,6 +84,11 @@ export class TelemetryEngine {
         displacement: this.config.baselineDisplacement * zoneFactor,
       });
       this.structuralCondition.set(sensor.zoneId, 1.0);
+    });
+    // Initialize stable per-sensor battery levels (seeded, not random per packet)
+    this.config.sensors.forEach((sensor, i) => {
+      // Each sensor starts between 88–99% and drains at ~0.001% per second
+      this.sensorBatteryLevels.set(sensor.sensorId, 88 + (i % 12));
     });
   }
 
@@ -264,7 +271,7 @@ export class TelemetryEngine {
       vehicleLoad: this.calculateVehicleLoad(),
       weatherCondition: this.weatherState.mode as WeatherCondition,
       signalStrength: failure ? Math.max(0, 100 - failure.severity * 100) : 95 + this.random.nextFloat() * 5,
-      batteryLevel: 90 + this.random.nextFloat() * 10,
+      batteryLevel: this.getStableBattery(sensor.sensorId, simulationTime),
       anomalyScore,
       healthScore,
       status,
@@ -392,6 +399,13 @@ export class TelemetryEngine {
     if (anomalyScore > 0.7 || healthScore < 60) return 'CRITICAL';
     if (anomalyScore > 0.3 || healthScore < 90) return 'WARNING';
     return 'NORMAL';
+  }
+
+  private getStableBattery(sensorId: string, simTime: number): number {
+    const base = this.sensorBatteryLevels.get(sensorId) || 95;
+    // Slow battery drain: drops ~1% every 3600 sim seconds
+    const current = base - (simTime / 3600);
+    return Math.max(0, current);
   }
 
   private generateQuality(noise: number): TelemetryQuality {
