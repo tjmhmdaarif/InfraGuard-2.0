@@ -1,0 +1,52 @@
+import { useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
+import { useEnvironmentStore } from '../../stores/environmentStore';
+
+export function RiverSystem() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const timeRef = useRef(0);
+  const floodActive = useEnvironmentStore((state) => state.floodActive);
+
+  const geometry = useMemo(() => {
+    const geo = new THREE.PlaneGeometry(300, 80, 100, 30);
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(0, -8, 0);
+    return geo;
+  }, []);
+
+  const material = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: '#1a3a5a',
+      metalness: 0.9,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide,
+    });
+  }, []);
+
+  useFrame((state, delta) => {
+    timeRef.current += delta;
+    if (meshRef.current && meshRef.current.material) {
+      const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+      const targetHeight = floodActive ? 2.2 : 0;
+      meshRef.current.position.y = THREE.MathUtils.damp(meshRef.current.position.y, targetHeight, 0.7, delta);
+      meshRef.current.position.y += Math.sin(timeRef.current * (floodActive ? 1.8 : 0.5)) * (floodActive ? 0.045 : 0.015);
+      mat.color.set(floodActive ? '#2983a3' : '#1a3a5a');
+      mat.emissive.set(floodActive ? '#0d3f4c' : '#000000');
+      mat.emissiveIntensity = floodActive ? 0.5 : 0;
+      mat.roughness = floodActive ? 0.18 : 0.1;
+      mat.opacity = floodActive ? 0.92 : 0.8;
+    }
+  });
+
+  return (
+    <mesh
+      ref={meshRef}
+      geometry={geometry}
+      material={material}
+      receiveShadow
+    />
+  );
+}
